@@ -1,0 +1,198 @@
+@startuml
+title Advanced Banking System - Complete Class Diagram
+
+' ==============================
+' ENUMS
+' ==============================
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+enum TransactionStatus {
+  SUCCESS
+  FAILED_INSUFFICIENT_FUNDS
+  FAILED_INVALID_ACCOUNT
+  FAILED_BLOCKED_ACCOUNT
+}
+
+enum AccountStatus {
+  ACTIVE
+  BLOCKED
+  CLOSED
+}
+
+' ==============================
+' EXCEPTIONS
+' ==============================
+class InsufficientFundsException
+class InvalidAccountException
+class AccountBlockedException
+
+InsufficientFundsException -|> Exception
+InvalidAccountException -|> Exception
+AccountBlockedException -|> Exception
+
+' ==============================
+' TRANSACTION
+' ==============================
+class Transaction {
+  - String transactionId
+  - TransactionType type
+  - double amount
+  - LocalDateTime timestamp
+  - String sourceAccount
+  - String destinationAccount
+  - TransactionStatus status
+
+  + Transaction(String id, TransactionType type, double amount, String src, String dest, TransactionStatus status)
+  + String getTransactionId()
+  + TransactionType getType()
+  + double getAmount()
+  + LocalDateTime getTimestamp()
+  + String getSourceAccount()
+  + String getDestinationAccount()
+  + TransactionStatus getStatus()
+}
+
+' ==============================
+' ABSTRACT BANK ACCOUNT
+' ==============================
+abstract class BankAccount {
+  - String accountNumber
+  - String customerId
+  - double balance
+  - AccountStatus status
+  - ArrayList<Transaction> transactions
+
+  + BankAccount(String accNo, String customerId, double initialBalance)
+  + void deposit(double amount)
+  + void withdraw(double amount)
+  + void addTransaction(Transaction t)
+  + double getBalance()
+  + String getAccountNumber()
+  + String getCustomerId()
+  + AccountStatus getStatus()
+  + void setStatus(AccountStatus status)
+  + void printTransactions()
+}
+
+' ==============================
+' SAVINGS ACCOUNT
+' ==============================
+class SavingsAccount {
+  - double minimumBalance
+  - double interestRate
+
+  + SavingsAccount(String accNo, String customerId, double initialBalance, double minBalance, double interestRate)
+  + void withdraw(double amount)
+  + void applyInterest()
+}
+
+' ==============================
+' CHECKING ACCOUNT
+' ==============================
+class CheckingAccount {
+  - double overdraftLimit
+  - double transactionFee
+
+  + CheckingAccount(String accNo, String customerId, double initialBalance, double overdraftLimit, double transactionFee)
+  + void withdraw(double amount)
+}
+
+' ==============================
+' CUSTOMER
+' ==============================
+class Customer {
+  - String customerId
+  - String name
+  - String pin
+  - boolean blocked
+  - int failedAttempts
+  - ArrayList<BankAccount> accounts
+
+  + Customer(String id, String name, String pin)
+  + void addAccount(BankAccount acc)
+  + ArrayList<BankAccount> getAccounts()
+  + BankAccount findAccount(String accNo)
+  + boolean verifyPin(String pin)
+  + void blockAccount()
+  + void unblockAccount()
+  + boolean isBlocked()
+  + String getCustomerId()
+  + String getName()
+}
+
+' ==============================
+' BANK
+' ==============================
+class Bank {
+  - HashMap<String, Customer> customers
+  - HashMap<String, BankAccount> accounts
+
+  + Bank()
+  + void registerCustomer(Customer c)
+  + Customer findCustomer(String id)
+  + BankAccount findAccount(String accNo)
+  + void createAccount(String type, String customerId, double initialBalance)
+  + void transferFunds(String srcAccNo, String destAccNo, double amount)
+  + void transferBetweenOwnAccounts(Customer c, String srcAccNo, String destAccNo, double amount)
+  + HashMap<String, Customer> getAllCustomers()
+  + HashMap<String, BankAccount> getAllAccounts()
+}
+
+' ==============================
+' ATM
+' ==============================
+class ATM {
+  - Bank bank
+  - Scanner input
+  - Customer currentCustomer
+  - BankAccount selectedAccount
+
+  + ATM(Bank bank)
+  + void start()
+  + void login()
+  + void showMenu()
+  + void selectAccount()
+  + void deposit()
+  + void withdraw()
+  + void transferBetweenOwnAccounts()
+  + void transferToAnotherCustomer()
+  + void viewTransactions()
+  + void printReceipt(Transaction t)
+  + void logout()
+}
+
+' ==============================
+' BANK ADMINISTRATOR
+' ==============================
+class BankAdministrator {
+  - String username
+  - String password
+  - Bank bank
+
+  + BankAdministrator(Bank bank)
+  + boolean login(String username, String password)
+  + void showAdminMenu()
+  + void viewAllCustomers()
+  + void viewAllAccounts()
+  + void createNewAccountForCustomer(String customerId, String type, double balance)
+  + void unblockCustomer(String customerId)
+}
+
+' ==============================
+' RELATIONSHIPS
+' ==============================
+Bank "1" o-- "*" Customer : manages >
+Customer "1" o-- "*" BankAccount : owns >
+BankAccount "1" o-- "*" Transaction : records >
+ATM --> Bank : interacts >
+ATM --> Customer : authenticates >
+ATM --> BankAccount : operates on >
+BankAdministrator --> Bank : controls >
+BankAccount <|-- SavingsAccount
+BankAccount <|-- CheckingAccount
+
+@enduml
